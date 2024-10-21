@@ -3,7 +3,7 @@
 
 int main() {
     // Create the raw socket using the loopback interface (lo)
-    int raw_socket = cria_raw_socket(INTERFACE);
+    int socket_fd = cria_raw_socket(INTERFACE);
 
     unsigned char buffer[BUFFER_SIZE];
 
@@ -12,10 +12,10 @@ int main() {
         memset(buffer, 0, BUFFER_SIZE);
 
         // Receive messages (blocking call)
-        int length = recv(raw_socket, buffer, BUFFER_SIZE - 1, 0); // -1 to reserve space for null-termination
+        int length = recv(socket_fd, buffer, BUFFER_SIZE - 1, 0); // -1 to reserve space for null-termination
         if (length == -1) {
             perror("Error receiving data");
-            close(raw_socket);
+            close(socket_fd);
             exit(EXIT_FAILURE);
         }
 
@@ -28,6 +28,6 @@ int main() {
         fwrite(buffer, 1, sizeof(buffer), stdout);
     }
 
-    close(raw_socket);
+    close(socket_fd);
     return 0;
 }

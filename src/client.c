@@ -3,7 +3,7 @@
 
 int main() {
     // Create the raw socket using the loopback interface (lo)
-    int raw_socket = cria_raw_socket(INTERFACE);
+    int socket_fd = cria_raw_socket(INTERFACE);
 
     //unsigned char buffer[BUFFER_SIZE];
     //strcpy((char *)buffer, MESSAGE);
@@ -24,16 +24,16 @@ int main() {
 */
     print_packet(pkt);
 
-
+    printf("Resultado checkcrc: %d \n", check_crc8(&pkt));
     // Send message to server
-    int length = send(raw_socket, &pkt, sizeof(pkt), 0);
+    int length = send(socket_fd, &pkt, sizeof(pkt), 0);
     if (length == -1) {
         perror("Error sending data");
-        close(raw_socket);
+        close(socket_fd);
         exit(EXIT_FAILURE);
     }
     free_packet(&pkt);
 
-    close(raw_socket);
+    close(socket_fd);
     return 0;
 }

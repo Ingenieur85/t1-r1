@@ -10,12 +10,11 @@
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <net/if.h>
-
-#include "crc8.h"
 #include "rawsoc.h"
 
 #define INTERFACE "lo"
 #define MAX_DATA_SIZE 63
+#define MAX_PKT_SIZE 90 // 8 + 6 + 5 + 63 + 8 = 90
 #define BUFFER_SIZE 1028
 
 #define INIT_MARKER 0b01111110
@@ -50,38 +49,25 @@ static const unsigned char* error_message[] = {
 
 //#define SEQ { sequencia = (sequencia + 1) % (31); }
 //extern int sequencia, socket_fd;
+extern int socket_fd;
 
 typedef struct packet_t {
-    uint8_t init;
-    uint8_t size_seq_type[2]; // Pack size (6 bits), seq (5 bits), type (5 bits)
-    unsigned char* data;
-    uint8_t crc;
+    uint8_t init;             // 8-bits
+    uint8_t size_seq_type[2]; //  size (6 bits), seq (5 bits), type (5 bits)
+    unsigned char* data;      // 0-63 bytes
+    uint8_t crc;              // 8-bits
 } packet;
 
-/*
-enum t_comando {
-    ls,
-    rls,
-    cd,
-    rcd,
-    get,
-    put,
-};
 
-typedef enum t_comando comando;
-*/
+// Own libs
+#include "crc8.h"
+#include "bitpack.h"
+#include "print.h"
 
 // Functions from packet.c
+uint8_t get_packet_size(packet *pkt);
 void build_packet(packet *pkt, uint8_t size, uint8_t seq, uint8_t type, const unsigned char *data);
 void free_packet(packet *pkt);
 
-// bitpack.c
-void pack_fields(packet *pkt, uint8_t size, uint8_t seq, uint8_t type);
-void unpack_fields(packet *pkt, uint8_t *size, uint8_t *seq, uint8_t *type);
-
-// print.c
-void print_binary(uint8_t byte);
-void print_size_seq_type(uint8_t size_seq_type[2]);
-void print_packet(packet pkt);
 
 #endif

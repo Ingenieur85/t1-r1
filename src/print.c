@@ -1,4 +1,4 @@
-#include "define.h"
+#include "print.h"
 
 
 // Function to print binary representation of a byte (8 bits)
