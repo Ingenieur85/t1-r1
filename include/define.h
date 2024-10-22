@@ -21,8 +21,6 @@
 #define MAX_RETRIES 128
 #define TIMEOUT_MILISEC 3999
 
-
-
 // Client side packet types
 #define ACK        0b00000
 #define NACK       0b00001
@@ -39,17 +37,9 @@
 #define OKSIZ      0b01110 // Server responds with filesize for a file
 #define ERROR      0b11111
 
-// ERROR codes (CANNOT be > 63 Bytes !)
-static const unsigned char* error_message[] = {
-    (const unsigned char *) "Erro Desconhecido",                        
-    (const unsigned char *) "Sem acesso ao arquivo",                
-    (const unsigned char *) "Sem espaço para armazenar arquivo",        
-    (const unsigned char *) "Arquivo não encontrado no servidor"
-};
-
 //#define SEQ { sequencia = (sequencia + 1) % (31); }
 //extern int sequencia, socket_fd;
-extern int socket_fd;
+//extern int socket_fd;
 
 typedef struct packet_t {
     uint8_t init;             // 8-bits
@@ -58,15 +48,22 @@ typedef struct packet_t {
     uint8_t crc;              // 8-bits
 } packet;
 
+// ERROR codes (CANNOT be > 63 Bytes !)
+static const unsigned char* error_message[] = {
+    (const unsigned char *) "Erro Desconhecido",                        
+    (const unsigned char *) "Sem acesso ao arquivo",                
+    (const unsigned char *) "Sem espaço para armazenar arquivo",        
+    (const unsigned char *) "Arquivo não encontrado no servidor"
+};
 
 // Own libs
 #include "crc8.h"
 #include "bitpack.h"
 #include "print.h"
 
-// Functions from packet.c
-uint8_t get_packet_size(packet *pkt);
+// Functions from packet.c 
 void build_packet(packet *pkt, uint8_t size, uint8_t seq, uint8_t type, const unsigned char *data);
+int receive_packet(int socket_fd, packet* received_pkt);
 void free_packet(packet *pkt);
 
 

@@ -1,5 +1,23 @@
 #include "define.h"
 
+uint8_t get_packet_size(packet *pkt) {
+    uint8_t size, seq, type = 0;
+    unpack_fields(pkt, &size, &seq, &type);
+    return size;
+}
+
+uint8_t get_packet_seq(packet *pkt) {
+    uint8_t size, seq, type = 0;
+    unpack_fields(pkt, &size, &seq, &type);
+    return seq;
+}
+
+uint8_t get_packet_type(packet *pkt) {
+    uint8_t size, seq, type = 0;
+    unpack_fields(pkt, &size, &seq, &type);
+    return type;
+}
+
 void pack_fields(packet *pkt, uint8_t size, uint8_t seq, uint8_t type) {
     pkt->size_seq_type[0] = 0b00000000;
     pkt->size_seq_type[1] = 0b00000000;

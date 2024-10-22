@@ -1,6 +1,5 @@
 #include "define.h"
 
-
 int main() {
     // Create the raw socket using the loopback interface (lo)
     int socket_fd = cria_raw_socket(INTERFACE);
@@ -32,6 +31,9 @@ int main() {
         close(socket_fd);
         exit(EXIT_FAILURE);
     }
+
+
+    
     free_packet(&pkt);
 
     close(socket_fd);
