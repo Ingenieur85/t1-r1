@@ -25,13 +25,7 @@ int main() {
 
     printf("Resultado checkcrc: %d \n", check_crc8(&pkt));
     // Send message to server
-    int length = send(socket_fd, &pkt, sizeof(pkt), 0);
-    if (length == -1) {
-        perror("Error sending data");
-        close(socket_fd);
-        exit(EXIT_FAILURE);
-    }
-
+    send_packet(socket_fd, &pkt);
 
     
     free_packet(&pkt);

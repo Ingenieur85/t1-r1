@@ -13,9 +13,9 @@ int main() {
         if (receive_packet(socket_fd, &pkt)) {
             //TODO remove
             // Print the actual data in the packet (up to 'size')
-            for (int i = 0; i < get_packet_size(&pkt); i++) {
-                printf("%02X ", pkt.data[i]);
-            }
+            //for (int i = 0; i < get_packet_size(&pkt); i++) {
+            //    printf("%02X ", pkt.data[i]);
+            //}
             print_packet(pkt);
         }
         free_packet(&pkt);
