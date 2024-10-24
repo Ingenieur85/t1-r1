@@ -36,16 +36,16 @@ void print_size_seq_type(uint8_t size_seq_type[2]) {
 
 // Function to print the packet fields in binary
 void print_packet(packet pkt) {
-    printf("Init (8 bits): ");
+    printf("\nInit (8 bits): ");
     print_binary(pkt.init);
     printf("\n");
 
-    printf("Size, Seq, Type:\n");
+    //printf("Size, Seq, Type:\n");
     print_size_seq_type(pkt.size_seq_type);
 
     printf("CRC (8 bits): ");
     print_binary(pkt.crc);
-    printf("\n");
+    printf("\n\n");
 
     // Print the data (assuming it's a null-terminated string for simplicity)
     if (pkt.data != NULL) {

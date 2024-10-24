@@ -23,10 +23,16 @@ void pack_fields(packet *pkt, uint8_t size, uint8_t seq, uint8_t type) {
     pkt->size_seq_type[1] = 0b00000000;
    
     // Left shift A by 2 bits, right shift B 4 bits and take 2 MSBs only.
-    pkt->size_seq_type[0] = (size << 2) | ((seq >> 4) & 0b00000011);
+    pkt->size_seq_type[0] = (size << 2) | ((seq & 0b00011000) >> 3);
 
     //Left shift seq by 5 bits, leaving the 3 LSBs, combine with all bits of type
     pkt->size_seq_type[1] = (seq << 5) | (type & 0b00011111 );
+
+    //print_binary(pkt->size_seq_type[0]);
+   // print_binary(pkt->size_seq_type[1]);
+
+   // printf("\nsize_seq_type: %02X %02X\n", pkt->size_seq_type[0], pkt->size_seq_type[1]);
+
 }
 
 void unpack_fields(packet *pkt, uint8_t *size, uint8_t *seq, uint8_t *type) {
@@ -41,6 +47,9 @@ void unpack_fields(packet *pkt, uint8_t *size, uint8_t *seq, uint8_t *type) {
 
     // Combine seq_msb and seq_lsb to reconstruct the original 5-bit seq
     *seq = (seq_msb << 3) | seq_lsb;
+
+   //printf("\nSEQ in unpack:");
+   // print_binary(*seq);
 
     // Extract type from the lower 5 bits of the second byte
     *type = pkt->size_seq_type[1] & 0b00011111;

@@ -17,8 +17,20 @@ int main() {
             //    printf("%02X ", pkt.data[i]);
             //}
             print_packet(pkt);
+
+            /*
+            FILE *fp = fopen("output.bin", "wb");
+            if (fp == NULL) {
+                perror("Failed to open file for writing");
+                return 1;
+            }
+            write_data_to_file(fp, pkt);
+            */        
         }
+
         free_packet(&pkt);
+
+
 
 #if 0        
         // Clear the buffer to avoid leftover data

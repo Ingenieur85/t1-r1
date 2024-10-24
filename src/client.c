@@ -19,7 +19,10 @@ int main() {
 #endif
 
     const unsigned char test = 'A';
-    build_packet(&pkt, 1, 0b00000, ACK, &test);
+    //build_packet(&pkt, strlen((const char *)error_message[2]), 0b00000, ERROR, error_message[2]);
+    uint8_t seq = 30;
+    seq = ((seq + 1) & 0b00011111);
+    build_packet(&pkt, 1, seq, NACK, &test);
 /*  
     pkt.init = INIT_MARKER;
     pkt.size_seq_type[0] = 0b11111100;
