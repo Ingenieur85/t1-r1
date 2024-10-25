@@ -45,7 +45,7 @@ void print_packet(packet pkt) {
 
     printf("CRC (8 bits): ");
     print_binary(pkt.crc);
-    printf("\n\n");
+    printf("\n");
 
     // Print the data (assuming it's a null-terminated string for simplicity)
     if (pkt.data != NULL) {
@@ -53,4 +53,5 @@ void print_packet(packet pkt) {
     } else {
         printf("Data: (NULL)\n");
     }
+    printf("\n");
 }
