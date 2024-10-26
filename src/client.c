@@ -1,16 +1,17 @@
 #include "define.h"
 
-int main(int argc, char *argv[]) {
-
+int main() {
+/*
+int argc, char *argv[]
     if (argc != 2) {
         printf("Usage: %s <interface>\n", argv[0]);
         printf("Example: %s eth0\n", argv[0]);
         return 1;
     }
-    
+*/   
     // Create the raw socket using the loopback interface (lo)
-    int socket_fd = cria_raw_socket(argv[1]);
-    printf("Starting client on interface: %s\n", argv[1]);
+    int socket_fd = cria_raw_socket(INTERFACE);
+    printf("Starting client on interface: %s\n", INTERFACE);
 
     
     packet pkt;
