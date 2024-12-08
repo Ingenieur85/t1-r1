@@ -9,6 +9,16 @@ int argc, char *argv[]
         return 1;
     }
 */   
+    char client_files[2048];
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        snprintf(client_files, sizeof(client_files), "%s/%s", cwd, CLIENT_DIR);
+        printf("\nClient files directory: %s\n", client_files);
+    } else {
+        perror("getcwd");
+        return 1;
+    }
+
     // Create the raw socket using the loopback interface (lo)
     int socket_fd = cria_raw_socket(INTERFACE);
     printf("Starting client on interface: %s\n", INTERFACE);
@@ -29,11 +39,11 @@ int argc, char *argv[]
     send_packet(socket_fd, &pkt);
 
 
-    const char *file_path = "/home/fds/redes1/t1/server_files/eneida.txt";
+    const char *file_path = "/home/fds/redes1/t1/lorem.txt";
     read_and_print_file(file_path);
 
 
-
+    printf("RESULT: %d", verify_checksum(file_path, 637994836));
 
     free_packet(&pkt);
     close(socket_fd);

@@ -16,7 +16,9 @@
 #define MAX_DATA_SIZE 63
 #define MAX_PKT_SIZE 90 // 8 + 6 + 5 + 63 + 8 = 90
 #define MIN_PACKET_SIZE 14
-#define BUFFER_SIZE 1028
+#define BUFFER_SIZE 1024
+#define SERVER_DIR "server_files"
+#define CLIENT_DIR "client_files"
 
 #define INIT_MARKER 0b01111110
 #define MAX_RETRIES 128

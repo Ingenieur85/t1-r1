@@ -11,6 +11,18 @@ int argc, char *argv[]
         return 1;
     }
 */
+    // Deals with file directories
+    char server_files[2048];
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        snprintf(server_files, sizeof(server_files), "%s/%s", cwd, SERVER_DIR);
+        printf("\nServer files directory: %s\n", server_files);
+    } else {
+        perror("getcwd");
+        return 1;
+    }
+
+
     // Create the raw socket using the loopback interface (lo)
     int socket_fd = cria_raw_socket(INTERFACE);
     printf("Starting server on interface: %s\n", INTERFACE);
