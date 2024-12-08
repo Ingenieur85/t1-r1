@@ -61,6 +61,7 @@ static const unsigned char* error_message[] = {
 #include "crc8.h"
 #include "bitpack.h"
 #include "print.h"
+#include "file.h"
 
 // Functions from packet.c 
 void build_packet(packet *pkt, uint8_t size, uint8_t seq, uint8_t type, const unsigned char *data);
@@ -68,6 +69,7 @@ int send_packet(int socket_fd, packet *pkt);
 int receive_packet(int socket_fd, packet* received_pkt);
 //void write_data_to_file(FILE *fp, packet pkt);
 void free_packet(packet *pkt);
+
 
 
 #endif

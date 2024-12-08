@@ -1,0 +1,13 @@
+* Algumas placas de rede possuem algumas regras específicas para envio e recebimento de mensagens. Uma exigência encontrada é por exemplo que o tamanho mínimo de um pacote enviado seja de 14 bytes. Menos que isso, a API ''send'' retornava erro. Enviar bytes a mais nesse caso não é problemático, desde que do outro lado, eles sejam ignorados.
+
+
+
+* Não é garantido que um pacote seja enviado inteiro, isto é, que ele não seja enviado em vários pedaços, de forma fragmentada. Também não é garantido que ele seja recebido inteiro. Geralmente isso acontece porque enviamos pacotes de tamanho não muito grande, cabendo inteiro no buffer da placa de rede, mas não é garantido. A solução é possibilitar o recebimento de pacotes parciais.
+
+
+
+* Placas de rede podem e vão sumir com pacotes de rede caso elas identifiquem que podem ou devem. Um exemplo é o fato das placas de redes absorverem pacotes do [[https://en.wikipedia.org/wiki/IEEE_802.1ad|protocolo VLAN]]. Geralmente isso é feito como forma de aliviar o trabalho do sistema operacional, deixando certas tarefas a cargo da própria placa de rede (offloading), e o que a sua placa pode fazer geralmente será listado pela ferramenta ''ethtool''. Uma forma de evitar o problema do VLAN é colocar um byte ''0xff'' após bytes que identificam o protocolo VLAN (''0x88'' e ''0x81'') e removê-los do outro lado da comunicação.
+
+
+
+* O sistema operacional quando detecta uma conexão a cabo, tenta realizar configurações automáticas de rede. Quando se conectam dois computadores e não se configura uma rede, essa configuração vai falhar. Porém, como a configuração é feita através de pacotes enviados na rede, estes pacotes vão aparecer como lixos ocasionais nas chamadas ''recv''.

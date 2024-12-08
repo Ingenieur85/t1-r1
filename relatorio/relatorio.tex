@@ -1,0 +1,55 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[portuguese]{babel} % vai trocar automaticamente, por exemplo, Table por tabela
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{pgfplots}			%Importação de imagens tikz, carregar depois de xcolor
+\usetikzlibrary{plotmarks}
+%\usetikzlibrary{external}
+%\tikzexternalize[prefix=tikz/]
+\pgfplotsset{compat=newest}
+\pgfkeys{/pgf/number format/.cd,1000 sep={}}%para não colocar , nos tikz para separar milhar
+
+\usepackage[nolist]{acronym}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{verbatim}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\begin{acronym}[TDMA]
+    \acro{IEEE}{\textit{Institute of Electrical and Electronics Engineers}}
+    \acro{ABNT}{Associação Brasileira de Normas Técnicas}
+\end{acronym}
+
+\newlength\figureheight
+\newlength\figurewidth
+
+
+\title{Redes 1 - Trabalho 1}
+
+\author{\IEEEauthorblockN{\textbf{Fabiano A. de Sá Filho}}
+\IEEEauthorblockA{\textit{Departamento de Informática} \\
+\textit{Universidade Federal do Paraná -- UFPR}\\
+GRR20223831 \\
+fabiano.filho@ufpr.br}
+}
+
+\maketitle
+
+\begin{abstract}
+Este trabalho teve como objetivo a modelagem de um problema de Programação Linear Real, bem como a implementação generalizada em C, a qual gera o programa linear para qualquer instância do problema. A saída pode então ser alimentada ao \textbf{\textit{lp\_solve}} para se obter a solução da instância dada. Neste relatório, descrevo a modelagem do problema e o programa linear resultante; os arquivos para a execução do programa em C seguem em anexo.
+\end{abstract}
+
+
+
+
+%\nocite{*}
+%\bibliographystyle{IEEEtran}
+%\bibliography{otimizacao}
+\end{document}

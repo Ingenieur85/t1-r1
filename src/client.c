@@ -16,17 +16,24 @@ int argc, char *argv[]
     
     packet pkt;
 
-
-
     const unsigned char test = 'A';
     uint8_t seq = 30;
     seq = ((seq + 1) & 0b00011111);
-    build_packet(&pkt, strlen((const char *)error_message[2]), seq, ERROR, error_message[2]);
+    for (int i = 0; i < 4; i++) {
+        build_packet(&pkt, strlen((const char *)error_message[i]), seq, ERROR, error_message[2]);
+    }
 
     //build_packet(&pkt, 0, seq, NACK, NULL);
     
     print_packet(pkt);
     send_packet(socket_fd, &pkt);
+
+
+    const char *file_path = "/home/fds/redes1/t1/server_files/eneida.txt";
+    read_and_print_file(file_path);
+
+
+
 
     free_packet(&pkt);
     close(socket_fd);
