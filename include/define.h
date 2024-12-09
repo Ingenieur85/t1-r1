@@ -53,10 +53,10 @@ typedef struct packet_t {
 
 // ERROR codes (CANNOT be > 63 Bytes !)
 static const unsigned char* error_message[] = {
-    (const unsigned char *) "Erro Desconhecido",                        
-    (const unsigned char *) "Sem acesso ao arquivo",                
-    (const unsigned char *) "Sem espaço para armazenar arquivo",        
-    (const unsigned char *) "Arquivo não encontrado no servidor"
+    (const unsigned char *) "SERVIDOR: Erro Desconhecido",                        
+    (const unsigned char *) "SERVIDOR: Sem acesso ao arquivo",                
+    (const unsigned char *) "SERVIDOR: Sem espaço para armazenar arquivo",        
+    (const unsigned char *) "SERVIDOR: Arquivo não encontrado no servidor"
 };
 
 // Own libs

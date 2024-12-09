@@ -98,6 +98,35 @@ void read_and_print_file(const char *file_path) {
     fclose(file);
 }
 
+int calculate_checksum(const char* my_file) {
+    if (my_file == NULL) {
+        perror("Invalid file path on verify_chesum function");
+        return 0;
+    }
+
+    char command[256];
+    snprintf(command, sizeof(command), "cksum %s", my_file);
+
+    // Open a pipe to execute the command and read its output
+    FILE* pipe = popen(command, "r");
+    if (pipe == NULL) {
+        perror("popen failed");
+        return 0;
+    }
+
+    unsigned long calculated_checksum;
+    unsigned long file_size;
+
+    // Parse the output of the cksum command
+    if (fscanf(pipe, "%lu %lu", &calculated_checksum, &file_size) != 2) {
+        fprintf(stderr, "Failed to parse cksum output on calculate checksum funciton.\n");
+    }
+
+    // Close the pipe
+    pclose(pipe);
+    return calculated_checksum;
+}
+
 int verify_checksum(const char* my_file, unsigned long checksum) {
     if (my_file == NULL) {
         perror("Invalid file path on verify_chesum function");
@@ -121,6 +150,7 @@ int verify_checksum(const char* my_file, unsigned long checksum) {
     // Parse the output of the cksum command
     if (fscanf(pipe, "%lu %lu", &calculated_checksum, &file_size) == 2) {
         matched = (calculated_checksum == checksum);
+        printf("Checksum: %lu, Calculado: %lu, Deu match: %s\n", checksum, calculated_checksum, matched ? "Sim" : "Não");
     } else {
         fprintf(stderr, "Failed to parse cksum output.\n");
     }
@@ -129,4 +159,19 @@ int verify_checksum(const char* my_file, unsigned long checksum) {
     pclose(pipe);
 
     return matched;
+}
+
+
+int file_exists(const char* file_path) {
+    // Check if file_path is valid
+    if (file_path == NULL) {
+        return 0; // File does not exist if the path is NULL
+    }
+
+    // Use access to check file existence
+    if (access(file_path, F_OK) == 0) {
+        return 1; // File exists
+    } else {
+        return 0; // File does not exist
+    }
 }

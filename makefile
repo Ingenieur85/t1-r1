@@ -6,7 +6,7 @@ CLIENT = client
 CC = gcc
 
 # Flags de compilação
-CFLAGS = -g -O0 -Wall -Wextra -Wpedantic -std=gnu2x #pkg-config --cflags glib-2.0
+CFLAGS = -g -O0 -Wall -Wextra -Wpedantic -Wno-unused-variable -std=gnu2x #pkg-config --cflags glib-2.0
 LFLAGS = -lm #pkg-config --libs glib-2.0
 
 # Diretórios

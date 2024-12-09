@@ -12,8 +12,8 @@ int argc, char *argv[]
     }
 */
     // Deals with file directories
-    char server_files[2048];
-    char cwd[1024];
+    char server_files[1024];
+    char cwd[512];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         snprintf(server_files, sizeof(server_files), "%s/%s", cwd, SERVER_DIR);
         printf("\nServer files directory: %s\n", server_files);
@@ -22,32 +22,58 @@ int argc, char *argv[]
         return 1;
     }
 
-
     // Create the raw socket using the loopback interface (lo)
     int socket_fd = cria_raw_socket(INTERFACE);
     printf("Starting server on interface: %s\n", INTERFACE);
 
-    //unsigned char buffer[BUFFER_SIZE];
+    printf("%s", error_message[3]);
+
+    char file_name[MAX_DATA_SIZE];
+    char file_path[2048];
+
+    packet pkt;
+    memset(&pkt, 0, sizeof(packet));
 
     while (1) {
-        packet pkt;
+        
+
 
         if (receive_packet(socket_fd, &pkt)) {
 
-            print_packet(pkt);
-
-            
-            FILE *fp = fopen("output.bin", "wb");
-            if (fp == NULL) {
-                perror("Failed to open file for writing");
-                return 1;
+            if (get_packet_type(&pkt) == ERROR){
+                print_packet(pkt);
             }
 
+            // CHECK : Client asked for a checksum. data seciton contains filename
+            if (get_packet_type(&pkt) == CHECK) {
+                int checksum = 0;
+                memcpy(file_name, pkt.data, get_packet_size(&pkt));
+                snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
+                checksum = calculate_checksum(file_path);
+                if (!file_exists(file_path)) {
+                    build_packet(&pkt, sizeof(int), 0, ERROR, (unsigned char *)error_message[3]);
+                } else{
+                    build_packet(&pkt, sizeof(int), 0, OKCHECKSUM, (unsigned char *)&checksum);
+                }
+                send_packet(socket_fd, &pkt);
+            }
+
+
+
+            // BACKUP
+
+
+            // RESTAURA
               
         }
 
-        free_packet(&pkt);
+        
     }
+
+    free_packet(&pkt);
+
+
+
 
     close(socket_fd);
     return 0;

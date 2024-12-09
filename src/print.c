@@ -1,6 +1,14 @@
 #include "print.h"
 
 
+void printMenu() {
+    printf("\n=== MENU DE OPÇÕES ===\n");
+    printf("1. backup <nome_arquivo>\n");
+    printf("2. restaura <nome_arquivo>\n");
+    printf("3. verifica <nome_arquivo>\n");
+    printf("4. sair\n");
+}
+
 // Function to print binary representation of a byte (8 bits)
 void print_binary(uint8_t byte) {
     for (int i = 7; i >= 0; i--) {
