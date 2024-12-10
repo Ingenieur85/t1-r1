@@ -59,6 +59,8 @@ static const unsigned char* error_message[] = {
     (const unsigned char *) "SERVIDOR: Arquivo não encontrado no servidor"
 };
 
+#define ERROR_4 "SERVIDOR: Arquivo não encontrado no servidor"
+
 // Own libs
 #include "crc8.h"
 #include "bitpack.h"
@@ -71,6 +73,7 @@ int send_packet(int socket_fd, packet *pkt);
 int receive_packet(int socket_fd, packet* received_pkt);
 //void write_data_to_file(FILE *fp, packet pkt);
 void free_packet(packet *pkt);
+void flush_socket(int socket_fd, const packet *last_sent_pkt);
 
 
 

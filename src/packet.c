@@ -1,3 +1,6 @@
+#include <fcntl.h>
+#include <sys/select.h>
+
 #include "define.h"
 
 void build_packet(packet *pkt, uint8_t size, uint8_t seq, uint8_t type, const unsigned char *data) {
@@ -129,6 +132,32 @@ void free_packet(packet *pkt) {
     memset(pkt, 0, sizeof(*pkt));
 
     return;
+}
+
+void flush_socket(int socket_fd, const packet *last_sent_pkt) {
+    unsigned char buffer[1024];
+    struct timeval timeout;
+    fd_set read_fds;
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 10000;
+
+    FD_ZERO(&read_fds);
+    FD_SET(socket_fd, &read_fds);
+
+    while (select(socket_fd + 1, &read_fds, NULL, NULL, &timeout) > 0) {
+        int len = recv(socket_fd, buffer, sizeof(buffer), 0);
+
+        if (len > 0) {
+            // Check if the packet matches the last sent packet (optional)
+            if (memcmp(buffer, last_sent_pkt, sizeof(packet)) != 0) {
+                // If it doesn't match, stop flushing
+                break;
+            }
+        }
+        FD_ZERO(&read_fds);
+        FD_SET(socket_fd, &read_fds);
+    }
 }
 
 

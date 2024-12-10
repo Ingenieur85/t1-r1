@@ -1,14 +1,13 @@
 #include "define.h"
 
-int main() {
-/*
-int argc, char *argv[]
+int main(int argc, char *argv[]) {
+
     if (argc != 2) {
         printf("Usage: %s <interface>\n", argv[0]);
         printf("Example: %s eth0\n", argv[0]);
         return 1;
     }
-*/   
+ 
     char client_files[1024];
     char cwd[512];
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -20,8 +19,8 @@ int argc, char *argv[]
     }
 
     // Create the raw socket using the loopback interface (lo)
-    int socket_fd = cria_raw_socket(INTERFACE);
-    printf("Starting client on interface: %s\n", INTERFACE);
+    int socket_fd = cria_raw_socket(argv[1]);
+    printf("Starting client on interface: %s\n", argv[1]);
 
 
     packet pkt;
@@ -37,6 +36,7 @@ int argc, char *argv[]
     
     print_packet(pkt);
     send_packet(socket_fd, &pkt);
+    free_packet(&pkt);
 
 
     //const char *file_path = "/home/fds/redes1/t1/lorem.txt";
@@ -64,35 +64,57 @@ int argc, char *argv[]
 
         // VERIFICA
         if (strncmp(command, "verifica", 8) == 0) {
-            sscanf(command, "verifica %s", file_name);
-            printf("\n");
-
-            snprintf(file_path, sizeof(file_path), "%s/%s", client_files, file_name);
-
-            printf("\n OII %s", file_path);
-            if (!file_exists(file_path)) {
-                printf("Arquivo não encontrado.Tente Novamente\n");
+            if (sscanf(command, "verifica %255s", file_name) != 1) {
+                printf("Comando inválido. Use: verifica <nome_do_arquivo>\n");
                 continue;
             }
 
-            build_packet(&pkt, strlen((const char *)file_name), 0, CHECK, (unsigned char *)file_name);
+            packet pkt;
+            memset(&pkt, 0, sizeof(packet));
+
+            snprintf(file_path, sizeof(file_path), "%s/%s", client_files, file_name);
+
+            if (!file_exists(file_path)) {
+                printf("Arquivo não encontrado. Tente novamente.\n");
+                continue;
+            }
+
+            build_packet(&pkt, strlen(file_name), 0, CHECK, (unsigned char *)file_name);
             print_packet(pkt);
             send_packet(socket_fd, &pkt);
+            flush_socket(socket_fd, &pkt);
 
-            if (receive_packet(socket_fd, &pkt)) {
-                if (get_packet_type(&pkt) == OKCHECKSUM) {
-                    int checksum = 0;
-                    memcpy(&checksum, pkt.data, sizeof(int));
-                    verify_checksum(file_name, checksum);
-                } else if (get_packet_type(&pkt) == ERROR) {
-                    printf("OIEEEEEE%s", pkt.data);
+            free_packet(&pkt); // Avoid memory leaks
+
+            packet received_pkt;
+            memset(&received_pkt, 0, sizeof(packet));
+
+
+            if (receive_packet(socket_fd, &received_pkt)) {
+                uint8_t pkt_type = get_packet_type(&received_pkt);
+                printf("Received packet type: %d\n", pkt_type);
+
+                if (pkt_type == OKCHECKSUM) {
+                    long long checksum = 0;
+                    memcpy(&checksum, received_pkt.data, sizeof(long long));
+                    int match = verify_checksum(file_path, checksum);
+                    printf("Checksum: %llu, Match: %s\n", checksum, match ? "Sim" : "Não");
+                } else if (pkt_type == ERROR) {
+                    if (received_pkt.data) {
+                        printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
+                    } else {
+                        printf("Erro desconhecido.\n");
+                    }
                 } else {
                     perror("Pacote de resposta não esperado.\n");
                 }
             }
 
-                // BACKUP
-         } else if (strncmp(command, "backup", 6) == 0) {
+            free_packet(&received_pkt); // Clean up after receiving
+        
+
+        // BACKUP
+        } else if (strncmp(command, "backup", 6) == 0) {
             sscanf(command, "backup %s", file_name);
 
 
@@ -116,5 +138,5 @@ int argc, char *argv[]
 
     close(socket_fd);
     return 0;
-    
+
 }

@@ -57,7 +57,9 @@ void print_packet(packet pkt) {
 
     // Print the data (assuming it's a null-terminated string for simplicity)
     if (pkt.data != NULL) {
-        printf("Data: %s\n", pkt.data);
+        for (int i = 0; i < get_packet_size(&pkt); i++) {
+            printf("%02X", pkt.data[i]);
+        }
     } else {
         printf("Data: (NULL)\n");
     }

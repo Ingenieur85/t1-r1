@@ -1,16 +1,14 @@
 #include "define.h"
 
 
-int main() {
+int main(int argc, char *argv[]) {
 
-/*
-int argc, char *argv[]
     if (argc != 2) {
         printf("Usage: %s <interface>\n", argv[0]);
         printf("Example: %s eth0\n", argv[0]);
         return 1;
     }
-*/
+
     // Deals with file directories
     char server_files[1024];
     char cwd[512];
@@ -23,8 +21,8 @@ int argc, char *argv[]
     }
 
     // Create the raw socket using the loopback interface (lo)
-    int socket_fd = cria_raw_socket(INTERFACE);
-    printf("Starting server on interface: %s\n", INTERFACE);
+    int socket_fd = cria_raw_socket(argv[1]);
+    printf("Starting server on interface: %s\n", argv[1]);
 
     printf("%s", error_message[3]);
 
@@ -37,42 +35,56 @@ int argc, char *argv[]
     while (1) {
         
 
-
         if (receive_packet(socket_fd, &pkt)) {
+            uint8_t pkt_type = get_packet_type(&pkt);
 
-            if (get_packet_type(&pkt) == ERROR){
+            if (pkt_type == ERROR) {
                 print_packet(pkt);
+                free_packet(&pkt);
+                continue;
             }
 
-            // CHECK : Client asked for a checksum. data seciton contains filename
-            if (get_packet_type(&pkt) == CHECK) {
+            // CHECKSUM
+            if (pkt_type == CHECK) {
                 print_packet(pkt);
-                int checksum = 0;
-                memcpy(file_name, pkt.data, get_packet_size(&pkt));
+
+                size_t data_size = get_packet_size(&pkt);
+                if (data_size >= sizeof(file_name)) {
+                    fprintf(stderr, "Filename too long.\n");
+                    free_packet(&pkt);
+                    continue;
+                }
+
+                memcpy(file_name, pkt.data, data_size);
+                file_name[data_size] = '\0'; // Ensure null-termination
+
+                if (strlen(server_files) + strlen(file_name) + 2 > sizeof(file_path)) {
+                    fprintf(stderr, "File path too long.\n");
+                    free_packet(&pkt);
+                    continue;
+                }
+
                 snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
-                checksum = calculate_checksum(file_path);
 
                 if (!file_exists(file_path)) {
-                    build_packet(&pkt, sizeof(int), 0, ERROR, (unsigned char *)"HAIL SATAN");
-                } else{
-                    build_packet(&pkt, sizeof(int), 0, OKCHECKSUM, (unsigned char *)&checksum);
+                    build_packet(&pkt, strlen(ERROR_4), 0, ERROR, (unsigned char *)ERROR_4);
+                } else {
+                    long long checksum = calculate_checksum(file_path);
+                    printf("Checksum: %llu\n", checksum);
+                    build_packet(&pkt, sizeof(long long), 0, OKCHECKSUM, (unsigned char *)&checksum);
                 }
+
+                printf("Sending response packet:\n");
                 print_packet(pkt);
                 send_packet(socket_fd, &pkt);
+                flush_socket(socket_fd, &pkt);
+                free_packet(&pkt);
+            } else {
+                fprintf(stderr, "Unexpected packet type: %d\n", pkt_type);
+                free_packet(&pkt);
             }
-
-
-
-            // BACKUP
-
-
-            // RESTAURA
-              
         }
-
-        
     }
-
     free_packet(&pkt);
 
 
