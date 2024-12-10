@@ -1,3 +1,6 @@
+#include <pthread.h>
+#include <stdbool.h>
+
 #include "define.h"
 
 

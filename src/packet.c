@@ -115,7 +115,7 @@ int receive_packet(int socket_fd, packet* received_pkt) {
     build_packet(received_pkt, size, seq, type, (size > 0) ? &buffer[3] : NULL);
 
     if (received_pkt->crc != buffer[3 + size]) {
-        perror("CRC check failed");
+        //perror("Erro de CRC. Enviando NACK");
         free_packet(received_pkt); // Clean up on failure
         return -1;
     }

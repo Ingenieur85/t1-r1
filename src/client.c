@@ -170,6 +170,9 @@ int main(int argc, char *argv[]) {
         } else if (strncmp(command, "restaura", 8) == 0) {
             sscanf(command, "restaura %s", file_name);
 
+
+
+
         // SAIR
         } else if (strcmp(command, "sair") == 0) {
             printf("Encerrando o programa!\n");
@@ -178,11 +181,6 @@ int main(int argc, char *argv[]) {
             printf("Comando inválido. Tente novamente.\n");
         }
     }
-
-
-
-
-
 
     close(socket_fd);
     return 0;

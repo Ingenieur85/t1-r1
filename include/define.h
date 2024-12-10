@@ -24,7 +24,7 @@
 #define INIT_MARKER 0b01111110
 #define MAX_SEQ_NUMBER 31
 #define MAX_RETRIES 128
-#define TIMEOUT_MILISEC 3999
+#define TIMEOUT_SECONDS 2
 
 // Client side packet types
 #define ACK        0b00000
