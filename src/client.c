@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
             }
 
             build_packet(&pkt, strlen(file_name), 0, CHECK, (unsigned char *)file_name);
-            print_packet(pkt);
+            //print_packet(pkt);
             send_packet(socket_fd, &pkt);
             flush_socket(socket_fd, &pkt);
 
@@ -91,16 +91,18 @@ int main(int argc, char *argv[]) {
             memset(&received_pkt, 0, sizeof(packet));
 
             while (1) {
+
                 if (receive_packet(socket_fd, &received_pkt)) {
                     uint8_t pkt_type = get_packet_type(&received_pkt);
-                    printf("Received packet type: %d\n", pkt_type);
-                    print_packet(received_pkt);
+                    //printf("Received packet type: %d\n", pkt_type);
+                    //print_packet(received_pkt);
 
                     if (pkt_type == OKCHECKSUM) {
                         long long checksum = 0;
                         memcpy(&checksum, received_pkt.data, sizeof(long long));
                         int match = verify_checksum(file_path, checksum);
                         printf("Checksum: %llu, Match: %s\n", checksum, match ? "Sim" : "Não");
+                        break;
                     } else if (pkt_type == ERROR) {
                         if (received_pkt.data) {
                             printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
@@ -108,9 +110,9 @@ int main(int argc, char *argv[]) {
                             printf("Erro desconhecido.\n");
                         }
                     } else {
+                        continue;
                         perror("Pacote de resposta não esperado.\n");
                     }
-                    break;
                 }
             }
             free_packet(&received_pkt); // Clean up after receiving

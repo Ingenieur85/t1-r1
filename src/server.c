@@ -24,16 +24,15 @@ int main(int argc, char *argv[]) {
     int socket_fd = cria_raw_socket(argv[1]);
     printf("Starting server on interface: %s\n", argv[1]);
 
-    printf("%s", error_message[3]);
 
     char file_name[MAX_DATA_SIZE];
     char file_path[2048];
 
-    packet pkt;
-    memset(&pkt, 0, sizeof(packet));
+
 
     while (1) {
-        
+        packet pkt;
+        memset(&pkt, 0, sizeof(packet));
 
         if (receive_packet(socket_fd, &pkt)) {
             uint8_t pkt_type = get_packet_type(&pkt);
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]) {
 
             // CHECKSUM
             if (pkt_type == CHECK) {
-                print_packet(pkt);
+                //print_packet(pkt);
 
                 size_t data_size = get_packet_size(&pkt);
                 if (data_size >= sizeof(file_name)) {
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 memcpy(file_name, pkt.data, data_size);
-                file_name[data_size] = '\0'; // Ensure null-termination
+                file_name[data_size] = '\0';
 
                 if (strlen(server_files) + strlen(file_name) + 2 > sizeof(file_path)) {
                     fprintf(stderr, "File path too long.\n");
@@ -71,22 +70,24 @@ int main(int argc, char *argv[]) {
                     build_packet(&pkt, strlen(ERROR_4), 0, ERROR, (unsigned char *)ERROR_4);
                 } else {
                     long long checksum = calculate_checksum(file_path);
-                    printf("Checksum: %llu\n", checksum);
+                    //printf("Checksum: %llu\n", checksum);
                     build_packet(&pkt, sizeof(long long), 0, OKCHECKSUM, (unsigned char *)&checksum);
                 }
 
-                printf("Sending response packet:\n");
-                print_packet(pkt);
+                //printf("Sending response packet:\n");
+                //print_packet(pkt);
                 send_packet(socket_fd, &pkt);
                 flush_socket(socket_fd, &pkt);
                 free_packet(&pkt);
             } else {
+                continue;
                 fprintf(stderr, "Unexpected packet type: %d\n", pkt_type);
                 free_packet(&pkt);
             }
         }
+        free_packet(&pkt);
     }
-    free_packet(&pkt);
+
 
 
 

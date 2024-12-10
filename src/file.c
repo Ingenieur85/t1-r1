@@ -98,10 +98,10 @@ void read_and_print_file(const char *file_path) {
     fclose(file);
 }
 
-int calculate_checksum(const char* my_file) {
+long long calculate_checksum(const char* my_file) {
     if (my_file == NULL) {
-        perror("Invalid file path on verify_chesum function");
-        return 0;
+        perror("Invalid file path in calculate_checksum function");
+        return -1; // Indicate an error
     }
 
     char command[256];
@@ -111,7 +111,7 @@ int calculate_checksum(const char* my_file) {
     FILE* pipe = popen(command, "r");
     if (pipe == NULL) {
         perror("popen failed");
-        return 0;
+        return -1; // Indicate an error
     }
 
     unsigned long calculated_checksum;
@@ -119,12 +119,16 @@ int calculate_checksum(const char* my_file) {
 
     // Parse the output of the cksum command
     if (fscanf(pipe, "%lu %lu", &calculated_checksum, &file_size) != 2) {
-        fprintf(stderr, "Failed to parse cksum output on calculate checksum funciton.\n");
+        fprintf(stderr, "Failed to parse cksum output.\n");
+        pclose(pipe);
+        return -1; // Indicate an error
     }
 
     // Close the pipe
     pclose(pipe);
-    return calculated_checksum;
+
+    // Return the checksum as long long
+    return (long long)calculated_checksum;
 }
 
 int verify_checksum(const char* my_file, unsigned long checksum) {
