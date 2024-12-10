@@ -11,6 +11,8 @@ void read_and_print_file(const char *file_path);
 long long calculate_checksum(const char* my_file);
 int verify_checksum(const char* my_file, unsigned long checksum);
 int file_exists(const char* file_path);
+void receive_file(int socket_fd, const char *file_path, size_t file_size);
+void send_file(int socket_fd, const char *file_path);
 
 
 

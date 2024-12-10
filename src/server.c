@@ -139,6 +139,7 @@ int main(int argc, char *argv[]) {
 
 
                 // Recebe o arquivo
+                receive_file(socket_fd, file_path, file_size);
 
 
             // RESTAURA

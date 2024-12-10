@@ -16,10 +16,11 @@ size_t get_file_size(const char *file_path) {
 
 // Function to read `n` bytes from a file
 size_t read_n_bytes(FILE *file, unsigned char *buffer, size_t n) {
-    if (!file || !buffer) {
-        return 0;
+    size_t total_read = 0, bytes_read;
+    while (total_read < n && (bytes_read = fread(buffer + total_read, 1, n - total_read, file)) > 0) {
+        total_read += bytes_read;
     }
-    return fread(buffer, 1, n, file);
+    return total_read;
 }
 
 
@@ -35,115 +36,117 @@ void overwrite_file (const char *file_path) {
 
 // Function to write received chunks to a file
 int write_to_file(const char *file_path, unsigned char *data, size_t size) {
-    FILE *file = fopen(file_path, "ab"); // Open file in append mode
+    FILE *file = fopen(file_path, "ab");
     if (!file) {
         perror("Error opening file");
         return -1;
     }
 
-    // Write the entire data buffer to the file in one call
-    if (fwrite(data, 1, size, file) != size) {
-        perror("Error writing to file");
-        fclose(file);
-        return -1;
+    size_t total_written = 0, bytes_written;
+    while (total_written < size) {
+        bytes_written = fwrite(data + total_written, 1, size - total_written, file);
+        if (bytes_written == 0) {
+            perror("Error writing to file");
+            fclose(file);
+            return -1;
+        }
+        total_written += bytes_written;
     }
 
     fclose(file);
     return 0;
 }
 
-void receive_file (int socket_fd, const char *file_path, size_t file_size) {
-    FILE *file = fopen(file_path, "rb");
-    if (!file) {
-        perror("Error opening file");
-        return;
-    }
-
-    unsigned char buffer[MAX_DATA_SIZE]; // Fixed-size buffer on the stack
-    size_t bytes_recvd = 0;
-    size_t total_bytes_read = 0;
-
-    while (total_bytes_read < file_size) {
-
-        packet pkt;
-        memset(&pkt, 0, sizeof(packet));
-
-        receive_packet(socket_fd, &pkt);
-        if (pkt.data) {
-            write_to_file(file_path, pkt.data, get_packet_size(&pkt));
-        } else {
-            perror ("packet of data was unexpectedly empty on receive_file function");
-        }
-
-        int seq = get_packet_seq(&pkt);
-
-        // Sends ACK for the received packet sequence
-        free_packet(&pkt);
-        memset(&pkt, 0, sizeof(packet));
-        build_packet(&pkt, 0, seq, ACK, NULL);
-        send_packet(socket_fd, &pkt);
-        flush_socket(socket_fd, &pkt);
-
-        total_bytes_read += bytes_recvd;
-    }
-    
-    if (total_bytes_read != file_size) {
-        fprintf(stderr, "Warning: Expected %zu bytes but read %zu bytes.\n", file_size, total_bytes_read);
-    }
-
-    fclose(file);
-
-}
-
-void send_file (int socket_fd, const char *file_path) {
+// Function to send a file over the network using Stop-and-Wait protocol
+void send_file(int socket_fd, const char *file_path) {
     size_t file_size = get_file_size(file_path);
     if (file_size == 0) { // Check for error or empty file
         fprintf(stderr, "Error determining file size or file is empty.\n");
         return;
     }
-    
+
     FILE *file = fopen(file_path, "rb");
     if (!file) {
         perror("Error opening file");
         return;
     }
-    
+
     printf("File size: %zu bytes\n", file_size);
 
     unsigned char buffer[MAX_DATA_SIZE]; // Fixed-size buffer on the stack
-    size_t bytes_read, total_bytes_read = 0;
+    size_t bytes_read;
+    int seq = 0; // Initial sequence number
 
-    // REads up to MAX_DATA_SIZE bytes from the file
     while ((bytes_read = fread(buffer, 1, MAX_DATA_SIZE, file)) > 0) {
+        packet pkt;
+        memset(&pkt, 0, sizeof(packet));
+        build_packet(&pkt, bytes_read, seq, DATA, buffer);
 
-        for (size_t i = 0; i < bytes_read; ++i) {
-            packet pkt;
-            memset(&pkt, 0, sizeof(packet));
-            build_packet(&pkt, bytes_read, i, DATA, buffer);
-            send_packet(socket_fd, &pkt);
-            flush_socket(socket_fd, &pkt);
-            free_packet(&pkt);
+        send_packet(socket_fd, &pkt);
+        flush_socket(socket_fd, &pkt);
+        free_packet(&pkt);
 
-            // Wait for ACK
-            while (1) {
-                receive_packet(socket_fd, &pkt);
-                if (get_packet_type(&pkt) == ACK) {
+        // Wait for ACK
+        while (1) {
+            packet ack_pkt;
+            memset(&ack_pkt, 0, sizeof(packet));
+
+            if (receive_packet(socket_fd, &ack_pkt)) {
+                if (get_packet_type(&ack_pkt) == ACK && get_packet_seq(&ack_pkt) == seq) {
+                    free_packet(&ack_pkt);
                     break;
                 }
             }
-
-            i = (i + 1) % MAX_SEQ_NUMBER;
+            free_packet(&ack_pkt);
         }
 
-        total_bytes_read += bytes_read;
+        seq = (seq + 1) % MAX_SEQ_NUMBER; // Increment sequence number
     }
-    
-    if (total_bytes_read != file_size) {
-        fprintf(stderr, "Warning: Expected %zu bytes but read %zu bytes.\n", file_size, total_bytes_read);
-    }
-
+    printf("Transferencia Completa.\n");
     fclose(file);
 }
+
+// Function to receive a file over the network using Stop-and-Wait protocol
+void receive_file(int socket_fd, const char *file_path, size_t file_size) {
+    overwrite_file(file_path); // Truncate file before receiving
+
+    size_t total_bytes_read = 0;
+    int expected_seq = 0; 
+
+    while (total_bytes_read < file_size) {
+        packet pkt;
+        memset(&pkt, 0, sizeof(packet));
+        if (receive_packet(socket_fd, &pkt)) {
+            uint8_t pkt_type = get_packet_type(&pkt);
+
+            if (pkt_type == DATA) {
+                if (get_packet_seq(&pkt) == expected_seq) {
+                    write_to_file(file_path, pkt.data, get_packet_size(&pkt));
+                    expected_seq = (expected_seq + 1) % MAX_SEQ_NUMBER; 
+                    total_bytes_read += get_packet_size(&pkt);
+                }
+
+                // Send ACK regardless of whether the packet was expected
+                packet ack_pkt;
+                memset(&ack_pkt, 0, sizeof(packet));
+                build_packet(&ack_pkt, 0, get_packet_seq(&pkt), ACK, NULL);
+                send_packet(socket_fd, &ack_pkt);
+                flush_socket(socket_fd, &ack_pkt);
+                free_packet(&ack_pkt);
+            } else {
+                //fprintf(stderr, "Error receiving packet.\n");
+                continue;
+            }
+        }
+        free_packet(&pkt);
+    }
+
+    if (total_bytes_read != file_size) {
+        fprintf(stderr, "Warning: Expected %zu bytes but received %zu bytes.\n", file_size, total_bytes_read);
+    }
+    printf("Transferencia Completa.\n");
+}
+
 
 //Debugging function, trash
 void read_and_print_file(const char *file_path) {

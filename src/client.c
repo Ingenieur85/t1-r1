@@ -163,6 +163,7 @@ int main(int argc, char *argv[]) {
             free_packet(&received_pkt); // Clean up after receiving
 
             // Transmite o arquivo
+            send_file(socket_fd, file_path);
 
 
         // RESTAURA
