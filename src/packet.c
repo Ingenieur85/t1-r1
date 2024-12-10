@@ -24,50 +24,59 @@ void build_packet(packet *pkt, uint8_t size, uint8_t seq, uint8_t type, const un
     }
     pkt->crc = calculate_crc8(pkt);
 }
+
 int send_packet(int socket_fd, packet *pkt) {
-    // Calculate the total size of the packet to send
+    if (pkt == NULL) {
+        fprintf(stderr, "Invalid packet pointer\n");
+        return 0;
+    }
+
+    // Extract size, sequence, and type fields
     uint8_t size, seq, type;
     unpack_fields(pkt, &size, &seq, &type);
-    
-    // Base packet size: init, size_seq_type (2 bytes), and crc (1 byte)
-    int total_length = sizeof(pkt->init) + sizeof(pkt->size_seq_type) + sizeof(pkt->crc);
 
-    // If the packet has data, add the data size to the total length
+    // Calculate the total packet size
+    int total_length = sizeof(pkt->init) + sizeof(pkt->size_seq_type) + sizeof(pkt->crc);
     if (size > 0 && pkt->data != NULL) {
         total_length += size;
     }
 
-    // Allocate a buffer to hold the entire packet
-    unsigned char *buffer = (unsigned char *)malloc(total_length);
+    // Ensure the packet meets the minimum size requirement
+    int padded_length = total_length < MIN_PACKET_SIZE ? MIN_PACKET_SIZE : total_length;
+
+    // Allocate buffer for the packet
+    unsigned char *buffer = (unsigned char *)malloc(padded_length);
     if (buffer == NULL) {
-        perror("Buffer malloc failed.");
+        perror("Buffer malloc failed");
         return 0;
     }
-    
-    // Copy fields into the buffer
+
+    // Fill the buffer with packet data
     buffer[0] = pkt->init;
     buffer[1] = pkt->size_seq_type[0];
     buffer[2] = pkt->size_seq_type[1];
 
-    // Copy data into the buffer if available
     if (size > 0 && pkt->data != NULL) {
         memcpy(&buffer[3], pkt->data, size);
     }
 
-    // Copy the CRC value into the buffer (after the data if data exists)
+    // Place the CRC after the actual data
     buffer[3 + size] = pkt->crc;
 
-    if (total_length < MIN_PACKET_SIZE) {
-        int padding = MIN_PACKET_SIZE - total_length;
-        memset(&buffer[total_length], 0, padding);
-        total_length += padding;
+    // Add padding if required
+    if (padded_length > total_length) {
+        memset(&buffer[total_length], 0, padded_length - total_length);
     }
 
-    // Send the complete buffer
-    int length = send(socket_fd, buffer, total_length, 0);
-    free(buffer);  // Free the allocated buffer
-    if (length == -1) {
-        perror("Error sending data");
+    // Send the buffer
+    int sent_length = send(socket_fd, buffer, padded_length, 0);
+    free(buffer);
+
+    if (sent_length == -1) {
+        perror("Error sending packet");
+        return 0;
+    } else if (sent_length != padded_length) {
+        fprintf(stderr, "Incomplete packet sent: %d/%d bytes\n", sent_length, padded_length);
         return 0;
     }
 

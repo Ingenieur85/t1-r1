@@ -46,15 +46,18 @@ int argc, char *argv[]
 
             // CHECK : Client asked for a checksum. data seciton contains filename
             if (get_packet_type(&pkt) == CHECK) {
+                print_packet(pkt);
                 int checksum = 0;
                 memcpy(file_name, pkt.data, get_packet_size(&pkt));
                 snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
                 checksum = calculate_checksum(file_path);
+
                 if (!file_exists(file_path)) {
-                    build_packet(&pkt, sizeof(int), 0, ERROR, (unsigned char *)error_message[3]);
+                    build_packet(&pkt, sizeof(int), 0, ERROR, (unsigned char *)"HAIL SATAN");
                 } else{
                     build_packet(&pkt, sizeof(int), 0, OKCHECKSUM, (unsigned char *)&checksum);
                 }
+                print_packet(pkt);
                 send_packet(socket_fd, &pkt);
             }
 

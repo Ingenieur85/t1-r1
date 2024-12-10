@@ -61,18 +61,9 @@ int argc, char *argv[]
         // Remove newline character if present
         command[strcspn(command, "\n")] = '\0';
 
-        // BACKUP
-        if (strncmp(command, "backup", 6) == 0) {
-            sscanf(command, "backup %s", file_name);
-
-
-        // RESTAURA
-        } else if (strncmp(command, "restaura", 8) == 0) {
-            sscanf(command, "restaura %s", file_name);
-
 
         // VERIFICA
-        } else if (strncmp(command, "verifica", 8) == 0) {
+        if (strncmp(command, "verifica", 8) == 0) {
             sscanf(command, "verifica %s", file_name);
             printf("\n");
 
@@ -100,6 +91,15 @@ int argc, char *argv[]
                 }
             }
 
+                // BACKUP
+         } else if (strncmp(command, "backup", 6) == 0) {
+            sscanf(command, "backup %s", file_name);
+
+
+        // RESTAURA
+        } else if (strncmp(command, "restaura", 8) == 0) {
+            sscanf(command, "restaura %s", file_name);
+
         // SAIR
         } else if (strcmp(command, "sair") == 0) {
             printf("Encerrando o programa!\n");
@@ -116,4 +116,5 @@ int argc, char *argv[]
 
     close(socket_fd);
     return 0;
+    
 }
