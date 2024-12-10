@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
                 if (receive_packet(socket_fd, &received_pkt)) {
                     uint8_t pkt_type = get_packet_type(&received_pkt);
                     printf("Received packet type: %d\n", pkt_type);
+                    print_packet(received_pkt);
 
                     if (pkt_type == OKCHECKSUM) {
                         long long checksum = 0;
