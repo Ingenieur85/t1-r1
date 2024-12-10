@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     int socket_fd = cria_raw_socket(argv[1]);
     printf("Starting client on interface: %s\n", argv[1]);
 
-
+/*
     packet pkt;
     memset(&pkt, 0, sizeof(packet));
     const unsigned char test = 'A';
@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     //printf("RESULT: %d", verify_checksum(file_path, 637994836));
 
     //free_packet(&pkt);
+*/
 
     char command[256];
     char file_name[MAX_DATA_SIZE];
@@ -89,27 +90,28 @@ int main(int argc, char *argv[]) {
             packet received_pkt;
             memset(&received_pkt, 0, sizeof(packet));
 
+            while (1) {
+                if (receive_packet(socket_fd, &received_pkt)) {
+                    uint8_t pkt_type = get_packet_type(&received_pkt);
+                    printf("Received packet type: %d\n", pkt_type);
 
-            if (receive_packet(socket_fd, &received_pkt)) {
-                uint8_t pkt_type = get_packet_type(&received_pkt);
-                printf("Received packet type: %d\n", pkt_type);
-
-                if (pkt_type == OKCHECKSUM) {
-                    long long checksum = 0;
-                    memcpy(&checksum, received_pkt.data, sizeof(long long));
-                    int match = verify_checksum(file_path, checksum);
-                    printf("Checksum: %llu, Match: %s\n", checksum, match ? "Sim" : "Não");
-                } else if (pkt_type == ERROR) {
-                    if (received_pkt.data) {
-                        printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
+                    if (pkt_type == OKCHECKSUM) {
+                        long long checksum = 0;
+                        memcpy(&checksum, received_pkt.data, sizeof(long long));
+                        int match = verify_checksum(file_path, checksum);
+                        printf("Checksum: %llu, Match: %s\n", checksum, match ? "Sim" : "Não");
+                    } else if (pkt_type == ERROR) {
+                        if (received_pkt.data) {
+                            printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
+                        } else {
+                            printf("Erro desconhecido.\n");
+                        }
                     } else {
-                        printf("Erro desconhecido.\n");
+                        perror("Pacote de resposta não esperado.\n");
                     }
-                } else {
-                    perror("Pacote de resposta não esperado.\n");
+                    break;
                 }
             }
-
             free_packet(&received_pkt); // Clean up after receiving
         
 

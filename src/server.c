@@ -38,11 +38,12 @@ int main(int argc, char *argv[]) {
         if (receive_packet(socket_fd, &pkt)) {
             uint8_t pkt_type = get_packet_type(&pkt);
 
-            if (pkt_type == ERROR) {
+/*            if (pkt_type == ERROR) {
                 print_packet(pkt);
                 free_packet(&pkt);
                 continue;
             }
+*/
 
             // CHECKSUM
             if (pkt_type == CHECK) {
