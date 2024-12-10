@@ -154,7 +154,7 @@ int verify_checksum(const char* my_file, unsigned long checksum) {
     // Parse the output of the cksum command
     if (fscanf(pipe, "%lu %lu", &calculated_checksum, &file_size) == 2) {
         matched = (calculated_checksum == checksum);
-        printf("Checksum: %lu, Calculado: %lu, Deu match: %s\n", checksum, calculated_checksum, matched ? "Sim" : "Não");
+        printf("Checksum recebido: %lu, Calculado: %lu, Deu match: %s\n", checksum, calculated_checksum, matched ? "Sim" : "Não");
     } else {
         fprintf(stderr, "Failed to parse cksum output.\n");
     }

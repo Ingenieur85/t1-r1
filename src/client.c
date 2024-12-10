@@ -101,7 +101,6 @@ int main(int argc, char *argv[]) {
                         long long checksum = 0;
                         memcpy(&checksum, received_pkt.data, sizeof(long long));
                         int match = verify_checksum(file_path, checksum);
-                        printf("Checksum: %llu, Match: %s\n", checksum, match ? "Sim" : "Não");
                         break;
                     } else if (pkt_type == ERROR) {
                         if (received_pkt.data) {
@@ -109,6 +108,7 @@ int main(int argc, char *argv[]) {
                         } else {
                             printf("Erro desconhecido.\n");
                         }
+                        break;
                     } else {
                         continue;
                         perror("Pacote de resposta não esperado.\n");
