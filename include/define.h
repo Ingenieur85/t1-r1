@@ -19,6 +19,7 @@
 #define BUFFER_SIZE 1024
 #define SERVER_DIR "server_files"
 #define CLIENT_DIR "client_files"
+#define MAX_FILESIZE 1024 * 1000 * 1000
 
 #define INIT_MARKER 0b01111110
 #define MAX_RETRIES 128
@@ -30,7 +31,7 @@
 #define BACKUP     0b00100  
 #define RESTORE    0b00101
 #define CHECK      0b00110 // Asks for Server's checksum on a file
-#define FILESIZE   0b01111 // Asks for filesize
+#define FILESIZE   0b01111 // Sends filesize to server
 
 // Server side packet types
 #define DATA       0b10000
