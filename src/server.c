@@ -58,6 +58,10 @@ int main(int argc, char *argv[]) {
                 snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
 
                 //First respond OK to receive filesize
+                build_packet(&pkt, 0, 0, OK, NULL);
+                send_packet(socket_fd, &pkt);
+                flush_socket(socket_fd, &pkt);
+                free_packet(&pkt);
 
                 // If file exceds limit
                 if (get_file_size(file_path) > MAX_FILESIZE) {

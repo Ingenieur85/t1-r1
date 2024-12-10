@@ -122,10 +122,10 @@ int main(int argc, char *argv[]) {
         // BACKUP
         } else if (strncmp(command, "backup", 6) == 0) {
             if (sscanf(command, "backup %255s", file_name) != 1) {
-                printf("Comando inválido. Use: verifica <nome_do_arquivo>\n");
+                printf("Comando inválido. Use: backup <nome_do_arquivo>\n");
                 continue;
             }
-
+            printf("Cheguei aqui");
             packet pkt;
             memset(&pkt, 0, sizeof(packet));
 
@@ -135,6 +135,8 @@ int main(int argc, char *argv[]) {
                 printf("Arquivo não encontrado. Tente novamente.\n");
                 continue;
             }
+
+
 
             //Manda pedido de backup
             build_packet(&pkt, strlen(file_name), 0, BACKUP, (unsigned char *)file_name);
@@ -198,11 +200,11 @@ int main(int argc, char *argv[]) {
                 }
             }
             free_packet(&pkt);
-
+        }
 
 
         // RESTAURA
-        } else if (strncmp(command, "restaura", 8) == 0) {
+        else if (strncmp(command, "restaura", 8) == 0) {
             sscanf(command, "restaura %s", file_name);
 
         // SAIR

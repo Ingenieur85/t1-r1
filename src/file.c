@@ -52,8 +52,100 @@ int write_to_file(const char *file_path, unsigned char *data, size_t size) {
     return 0;
 }
 
+void receive_file (int socket_fd, const char *file_path, size_t file_size) {
+    FILE *file = fopen(file_path, "rb");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
 
-// Function to read an entire file, print its bytes, and write to another file
+    unsigned char buffer[MAX_DATA_SIZE]; // Fixed-size buffer on the stack
+    size_t bytes_recvd = 0;
+    size_t total_bytes_read = 0;
+
+    while (total_bytes_read < file_size) {
+
+        packet pkt;
+        memset(&pkt, 0, sizeof(packet));
+
+        receive_packet(socket_fd, &pkt);
+        if (pkt.data) {
+            write_to_file(file_path, pkt.data, get_packet_size(&pkt));
+        } else {
+            perror ("packet of data was unexpectedly empty on receive_file function");
+        }
+
+        int seq = get_packet_seq(&pkt);
+
+        // Sends ACK for the received packet sequence
+        free_packet(&pkt);
+        memset(&pkt, 0, sizeof(packet));
+        build_packet(&pkt, 0, seq, ACK, NULL);
+        send_packet(socket_fd, &pkt);
+        flush_socket(socket_fd, &pkt);
+
+        total_bytes_read += bytes_recvd;
+    }
+    
+    if (total_bytes_read != file_size) {
+        fprintf(stderr, "Warning: Expected %zu bytes but read %zu bytes.\n", file_size, total_bytes_read);
+    }
+
+    fclose(file);
+
+}
+
+void send_file (int socket_fd, const char *file_path) {
+    size_t file_size = get_file_size(file_path);
+    if (file_size == 0) { // Check for error or empty file
+        fprintf(stderr, "Error determining file size or file is empty.\n");
+        return;
+    }
+    
+    FILE *file = fopen(file_path, "rb");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+    
+    printf("File size: %zu bytes\n", file_size);
+
+    unsigned char buffer[MAX_DATA_SIZE]; // Fixed-size buffer on the stack
+    size_t bytes_read, total_bytes_read = 0;
+
+    // REads up to MAX_DATA_SIZE bytes from the file
+    while ((bytes_read = fread(buffer, 1, MAX_DATA_SIZE, file)) > 0) {
+
+        for (size_t i = 0; i < bytes_read; ++i) {
+            packet pkt;
+            memset(&pkt, 0, sizeof(packet));
+            build_packet(&pkt, bytes_read, i, DATA, buffer);
+            send_packet(socket_fd, &pkt);
+            flush_socket(socket_fd, &pkt);
+            free_packet(&pkt);
+
+            // Wait for ACK
+            while (1) {
+                receive_packet(socket_fd, &pkt);
+                if (get_packet_type(&pkt) == ACK) {
+                    break;
+                }
+            }
+
+            i = (i + 1) % MAX_SEQ_NUMBER;
+        }
+
+        total_bytes_read += bytes_read;
+    }
+    
+    if (total_bytes_read != file_size) {
+        fprintf(stderr, "Warning: Expected %zu bytes but read %zu bytes.\n", file_size, total_bytes_read);
+    }
+
+    fclose(file);
+}
+
+//Debugging function, trash
 void read_and_print_file(const char *file_path) {
     size_t file_size = get_file_size(file_path);
     if (file_size == 0) { // Check for error or empty file
