@@ -57,25 +57,46 @@ int main(int argc, char *argv[]) {
 
                 snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
 
-                //First respond OK to receive filesize
+                // First respond OK to indicate readiness for file size
                 build_packet(&pkt, 0, 0, OK, NULL);
                 send_packet(socket_fd, &pkt);
                 flush_socket(socket_fd, &pkt);
                 free_packet(&pkt);
 
-                // If file exceds limit
-                if (get_file_size(file_path) > MAX_FILESIZE) {
-                    build_packet(&pkt, strlen(ERROR_3), 0, ERROR, (unsigned char *)ERROR_3);
-                
-                // OK to receive file
-                } else {
-                    build_packet(&pkt, 0, 0, OK, NULL);
+                // Receive file size from client
+                memset(&pkt, 0, sizeof(packet));
+                if (!receive_packet(socket_fd, &pkt) || get_packet_type(&pkt) != FILESIZE) {
+                    fprintf(stderr, "Failed to receive file size.\n");
+                    free_packet(&pkt);
+                    continue;
                 }
 
+                size_t file_size = 0;
+                memcpy(&file_size, pkt.data, sizeof(size_t));
+                free_packet(&pkt);
+
+                if (file_size > MAX_FILESIZE) {
+                    fprintf(stderr, "File size exceeds maximum limit.\n");
+                    build_packet(&pkt, strlen(ERROR_3), 0, ERROR, (unsigned char *)ERROR_3);
+                    send_packet(socket_fd, &pkt);
+                    flush_socket(socket_fd, &pkt);
+                    free_packet(&pkt);
+                    continue;
+                }
+
+                // OK to receive file
+                build_packet(&pkt, 0, 0, OK, NULL);
                 send_packet(socket_fd, &pkt);
                 flush_socket(socket_fd, &pkt);
                 free_packet(&pkt);
+
+                // Placeholder: Logic for receiving the file data
+                printf("Ready to receive file: %s (size: %zu bytes)\n", file_path, file_size);
+                // Implement file receiving logic here...
+
             } else {
+                fprintf(stderr, "Unknown packet type: %d\n", pkt_type);
+                free_packet(&pkt);
                 continue;
             }
         
