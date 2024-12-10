@@ -1,5 +1,31 @@
 #include "define.h"
 
+void listen_for_ok(int socket_fd, packet received_pkt, char *msg) {
+    while (1) {
+
+        if (receive_packet(socket_fd, &received_pkt)) {
+            uint8_t pkt_type = get_packet_type(&received_pkt);
+            //printf("Received packet type: %d\n", pkt_type);
+            //print_packet(received_pkt);
+
+            if (pkt_type == OK) {
+                printf("%s\n", msg);
+                break;
+            } else if (pkt_type == ERROR) {
+                if (received_pkt.data) {
+                    printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
+                } else {
+                    printf("Erro desconhecido.\n");
+                }
+                break;
+            } else {
+                continue;
+                perror("Pacote de resposta não esperado.\n");
+            }
+        }
+    }
+
+}
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
@@ -22,31 +48,6 @@ int main(int argc, char *argv[]) {
     int socket_fd = cria_raw_socket(argv[1]);
     printf("Starting client on interface: %s\n", argv[1]);
 
-/*
-    packet pkt;
-    memset(&pkt, 0, sizeof(packet));
-    const unsigned char test = 'A';
-    uint8_t seq = 30;
-    seq = ((seq + 1) & 0b00011111);
-
-    build_packet(&pkt, strlen((const char *)error_message[3]), seq, ERROR, error_message[2]);
-
-
-    //build_packet(&pkt, 0, seq, NACK, NULL);
-    
-    print_packet(pkt);
-    send_packet(socket_fd, &pkt);
-    free_packet(&pkt);
-
-
-    //const char *file_path = "/home/fds/redes1/t1/lorem.txt";
-    //read_and_print_file(file_path);
-
-
-    //printf("RESULT: %d", verify_checksum(file_path, 637994836));
-
-    //free_packet(&pkt);
-*/
 
     char command[256];
     char file_name[MAX_DATA_SIZE];
@@ -91,6 +92,7 @@ int main(int argc, char *argv[]) {
             memset(&received_pkt, 0, sizeof(packet));
 
             while (1) {
+
                 if (receive_packet(socket_fd, &received_pkt)) {
                     uint8_t pkt_type = get_packet_type(&received_pkt);
                     //printf("Received packet type: %d\n", pkt_type);
@@ -117,92 +119,54 @@ int main(int argc, char *argv[]) {
             free_packet(&received_pkt); // Clean up after receiving
         
 
-
-
         // BACKUP
         } else if (strncmp(command, "backup", 6) == 0) {
             if (sscanf(command, "backup %255s", file_name) != 1) {
-                printf("Comando inválido. Use: backup <nome_do_arquivo>\n");
-                continue;
-            }
-
-            snprintf(file_path, sizeof(file_path), "%s/%s", client_files, file_name);
-            if (!file_exists(file_path)) {
-                printf("Arquivo não encontrado. Tente novamente.\n");
+                printf("Comando inválido. Use: verifica <nome_do_arquivo>\n");
                 continue;
             }
 
             packet pkt;
             memset(&pkt, 0, sizeof(packet));
 
-            // Send backup request
+            snprintf(file_path, sizeof(file_path), "%s/%s", client_files, file_name);
+
+            if (!file_exists(file_path)) {
+                printf("Arquivo não encontrado. Tente novamente.\n");
+                continue;
+            }
+
+            // Pede o backup do arquivo
             build_packet(&pkt, strlen(file_name), 0, BACKUP, (unsigned char *)file_name);
+            send_packet(socket_fd, &pkt);
+            flush_socket(socket_fd, &pkt);
+            free_packet(&pkt); // Avoid memory leaks
+
+            // Escuta a resposta
+            packet received_pkt;
+            memset(&received_pkt, 0, sizeof(packet));
+            listen_for_ok(socket_fd, received_pkt, "Servidor tem o nome do arquivo.");
+            free_packet(&received_pkt); // Clean up after receiving
+
+            // Envia tamanho do arquivo
+            size_t file_size = get_file_size(file_path);
+            printf("Tamanho do arquivo: %zu bytes\n", file_size);
+            memset(&pkt, 0, sizeof(packet));
+            build_packet(&pkt, sizeof(size_t), 0, FILESIZE, (unsigned char *)&file_size);
             send_packet(socket_fd, &pkt);
             flush_socket(socket_fd, &pkt);
             free_packet(&pkt);
 
-            // Wait for server response
-            while (1) {
-                memset(&pkt, 0, sizeof(packet));
-                if (!receive_packet(socket_fd, &pkt)) {
-                    perror("Erro ao receber resposta do servidor.\n");
-                    break;
-                }
+            // Recebe Ok para transmitir arquivo
+            memset(&received_pkt, 0, sizeof(packet));
+            listen_for_ok(socket_fd, received_pkt, "Servidor recebeu o tamanho do arquivo e deu ok.");
+            free_packet(&received_pkt); // Clean up after receiving
 
-                uint8_t pkt_type = get_packet_type(&pkt);
-                if (pkt_type == OK) {
-                    size_t f_size = get_file_size(file_path);
-                    build_packet(&pkt, sizeof(size_t), 0, FILESIZE, (unsigned char *)&f_size);
-                    send_packet(socket_fd, &pkt);
-                    flush_socket(socket_fd, &pkt);
-                    free_packet(&pkt);
-
-                    // File transfer loop
-                    while (1) {
-                        memset(&pkt, 0, sizeof(packet));
-                        if (!receive_packet(socket_fd, &pkt)) {
-                            perror("Erro durante a transferência do arquivo.\n");
-                            break;
-                        }
-
-                        pkt_type = get_packet_type(&pkt);
-                        if (pkt_type == OK) {
-                            printf("Envia o arquivo\n");
-                        } else if (pkt_type == ERROR) {
-                            if (pkt.data) {
-                                printf("Erro: %.*s\n", pkt.size_seq_type[0] >> 2, pkt.data);
-                            } else {
-                                printf("Erro desconhecido.\n");
-                            }
-                            break;
-                        } else if (pkt_type == ENDTX) {
-                            printf("Arquivo enviado com sucesso.\n");
-                            break;
-                        } else {
-                            perror("Pacote de resposta não esperado.\n");
-                            break;
-                        }
-                    }
-                    break;
-                } else if (pkt_type == ERROR) {
-                    if (pkt.data) {
-                        printf("Erro: %.*s\n", pkt.size_seq_type[0] >> 2, pkt.data);
-                    } else {
-                        printf("Erro desconhecido.\n");
-                    }
-                    break;
-                } else {
-                    perror("Pacote de resposta não esperado.\n");
-                    break;
-                }
-            }
-
-            free_packet(&pkt);
-        }
+            // Transmite o arquivo
 
 
         // RESTAURA
-        else if (strncmp(command, "restaura", 8) == 0) {
+        } else if (strncmp(command, "restaura", 8) == 0) {
             sscanf(command, "restaura %s", file_name);
 
         // SAIR

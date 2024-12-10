@@ -37,75 +37,6 @@ int main(int argc, char *argv[]) {
         if (receive_packet(socket_fd, &pkt)) {
             uint8_t pkt_type = get_packet_type(&pkt);
 
-            // BACKUP
-            if (pkt_type == BACKUP) {
-                size_t data_size = get_packet_size(&pkt);
-                if (data_size >= sizeof(file_name)) {
-                    fprintf(stderr, "Filename too long.\n");
-                    free_packet(&pkt);
-                    continue;
-                }
-
-                memcpy(file_name, pkt.data, data_size);
-                file_name[data_size] = '\0';
-
-                if (strlen(server_files) + strlen(file_name) + 2 > sizeof(file_path)) {
-                    fprintf(stderr, "File path too long.\n");
-                    free_packet(&pkt);
-                    continue;
-                }
-
-                snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
-
-                // First respond OK to indicate readiness for file size
-                build_packet(&pkt, 0, 0, OK, NULL);
-                send_packet(socket_fd, &pkt);
-                flush_socket(socket_fd, &pkt);
-                free_packet(&pkt);
-
-                // Receive file size from client
-                memset(&pkt, 0, sizeof(packet));
-                if (!receive_packet(socket_fd, &pkt) || get_packet_type(&pkt) != FILESIZE) {
-                    fprintf(stderr, "Failed to receive file size.\n");
-                    free_packet(&pkt);
-                    continue;
-                }
-
-                size_t file_size = 0;
-                memcpy(&file_size, pkt.data, sizeof(size_t));
-                free_packet(&pkt);
-
-                if (file_size > MAX_FILESIZE) {
-                    fprintf(stderr, "File size exceeds maximum limit.\n");
-                    build_packet(&pkt, strlen(ERROR_3), 0, ERROR, (unsigned char *)ERROR_3);
-                    send_packet(socket_fd, &pkt);
-                    flush_socket(socket_fd, &pkt);
-                    free_packet(&pkt);
-                    continue;
-                }
-
-                // OK to receive file
-                build_packet(&pkt, 0, 0, OK, NULL);
-                send_packet(socket_fd, &pkt);
-                flush_socket(socket_fd, &pkt);
-                free_packet(&pkt);
-
-                // Placeholder: Logic for receiving the file data
-                printf("Ready to receive file: %s (size: %zu bytes)\n", file_path, file_size);
-                // Implement file receiving logic here...
-
-            } else {
-                fprintf(stderr, "Unknown packet type: %d\n", pkt_type);
-                free_packet(&pkt);
-                continue;
-            }
-        
-
-
-
-
-
-
 
 
             // CHECKSUM
@@ -143,11 +74,89 @@ int main(int argc, char *argv[]) {
                 send_packet(socket_fd, &pkt);
                 flush_socket(socket_fd, &pkt);
                 free_packet(&pkt);
+           
+            // BACKUP
+            } else if (pkt_type == BACKUP) {
+
+                size_t data_size = get_packet_size(&pkt);
+                if (data_size >= sizeof(file_name)) {
+                    fprintf(stderr, "Filename too long.\n");
+                    free_packet(&pkt);
+                    continue;
+                }
+
+                memcpy(file_name, pkt.data, data_size);
+                file_name[data_size] = '\0';
+
+                if (strlen(server_files) + strlen(file_name) + 2 > sizeof(file_path)) {
+                    fprintf(stderr, "File path too long.\n");
+                    free_packet(&pkt);
+                    continue;
+                }
+
+                snprintf(file_path, sizeof(file_path), "%s/%s", server_files, file_name);
+                printf("Cliente requisitou backup de: %s\n", file_name);
+
+                // Responde OK para o cliente
+                memset(&pkt, 0, sizeof(packet));
+                build_packet(&pkt, 0, 0, OK, NULL);
+                send_packet(socket_fd, &pkt);
+                flush_socket(socket_fd, &pkt);
+                free_packet(&pkt);
+
+                // Recebe o tamanho do arquivo
+                size_t file_size;
+
+                while (1) {
+                    packet received_pkt;
+                    memset(&received_pkt, 0, sizeof(packet));
+
+                    if (receive_packet(socket_fd, &received_pkt)) {
+                        uint8_t pkt_type = get_packet_type(&received_pkt);
+
+                        if (pkt_type == FILESIZE) {
+                            if (received_pkt.data) {
+                                memcpy(&file_size, received_pkt.data, sizeof(size_t));
+                                printf("Tamanho do arquivo: %zu bytes\n", file_size);
+                            } else {
+                                fprintf(stderr, "Received packet unexpectedly empty.\n");
+                            }
+                            break;
+                        } else {
+                            fprintf(stderr, "Unexpected packet type: %d\n", pkt_type);
+                            free_packet(&received_pkt);
+                            continue;
+                        }
+
+                    }
+                }
+                // Manda ok para transmitir
+                memset(&pkt, 0, sizeof(packet));
+                build_packet(&pkt, 0, 0, OK, NULL);
+                send_packet(socket_fd, &pkt);
+                flush_socket(socket_fd, &pkt);
+                free_packet(&pkt);
+
+
+                // Recebe o arquivo
+
+
+            // RESTAURA
+            } else if (pkt_type == RESTORE) {
+                continue;
+
+
+
+
+            // SERVIDOR RECEBEU ALGO ESTRANHO
             } else {
                 continue;
                 fprintf(stderr, "Unexpected packet type: %d\n", pkt_type);
                 free_packet(&pkt);
             }
+
+
+
 
         }
         free_packet(&pkt);
