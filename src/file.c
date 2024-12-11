@@ -1,5 +1,4 @@
-#include <pthread.h>
-#include <stdbool.h>
+#include <sys/time.h>
 
 #include "define.h"
 
@@ -61,6 +60,15 @@ int write_to_file(const char *file_path, unsigned char *data, size_t size) {
 }
 
 // Function to send a file over the network using Stop-and-Wait protocol
+#define TIMEOUT_SECONDS 2 // Define the timeout duration in seconds
+
+// Timestamp function to get the current time in milliseconds
+long long timestamp() {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+}
+
 void send_file(int socket_fd, const char *file_path) {
     size_t file_size = get_file_size(file_path);
     if (file_size == 0) { // Check for error or empty file
@@ -85,27 +93,36 @@ void send_file(int socket_fd, const char *file_path) {
         memset(&pkt, 0, sizeof(packet));
         build_packet(&pkt, bytes_read, seq, DATA, buffer);
 
-        send_packet(socket_fd, &pkt);
-        flush_socket(socket_fd, &pkt);
-        free_packet(&pkt);
+        int ack_received = 0;
+        while (!ack_received) {
+            send_packet(socket_fd, &pkt);
+            flush_socket(socket_fd, &pkt);
 
-        // Wait for ACK
-        while (1) {
-            packet ack_pkt;
-            memset(&ack_pkt, 0, sizeof(packet));
+            // Wait for ACK with timeout
+            long long start_time = timestamp();
+            while (timestamp() - start_time < TIMEOUT_SECONDS * 1000) {
+                packet ack_pkt;
+                memset(&ack_pkt, 0, sizeof(packet));
 
-            if (receive_packet(socket_fd, &ack_pkt)) {
-                if (get_packet_type(&ack_pkt) == ACK && get_packet_seq(&ack_pkt) == seq) {
+                if (receive_packet(socket_fd, &ack_pkt)) {
+                    if (get_packet_type(&ack_pkt) == ACK && get_packet_seq(&ack_pkt) == seq) {
+                        ack_received = 1;
+                        free_packet(&ack_pkt);
+                        break;
+                    }
                     free_packet(&ack_pkt);
-                    break;
                 }
             }
-            free_packet(&ack_pkt);
+
+            if (!ack_received) {
+                printf("Timeout occurred. Retransmitting packet with sequence number %d.\n", seq);
+            }
         }
 
+        free_packet(&pkt);
         seq = (seq + 1) % MAX_SEQ_NUMBER; // Increment sequence number
     }
-    printf("Transferencia Completa.\n");
+
     fclose(file);
 }
 
