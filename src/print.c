@@ -9,14 +9,12 @@ void printMenu() {
     printf("4. sair\n");
 }
 
-// Function to print binary representation of a byte (8 bits)
 void print_binary(uint8_t byte) {
     for (int i = 7; i >= 0; i--) {
         printf("%d", (byte >> i) & 1);
     }
 }
 
-// Function to extract and print the bits from size_seq_type
 void print_size_seq_type(uint8_t size_seq_type[2]) {
     // Extract pack size (6 bits), seq (5 bits), and type (5 bits)
     uint16_t combined = (size_seq_type[0] << 8) | size_seq_type[1]; // Combine the two bytes
@@ -28,7 +26,7 @@ void print_size_seq_type(uint8_t size_seq_type[2]) {
     // Type (last 5 bits)
     uint8_t type = combined & 0x1F;               // 5 bits
 
-    // Print the individual components in binary
+
     printf("Pack size (6 bits): ");
     for (int i = 5; i >= 0; i--) printf("%d", (pack_size >> i) & 1);
     printf("\n");
@@ -42,7 +40,7 @@ void print_size_seq_type(uint8_t size_seq_type[2]) {
     printf("\n");
 }
 
-// Function to print the packet fields in binary
+
 void print_packet(packet pkt) {
     printf("\nInit (8 bits): ");
     print_binary(pkt.init);
@@ -55,7 +53,7 @@ void print_packet(packet pkt) {
     print_binary(pkt.crc);
     printf("\n");
 
-    // Print the data (assuming it's a null-terminated string for simplicity)
+
     if (pkt.data != NULL) {
         for (int i = 0; i < get_packet_size(&pkt); i++) {
             printf("%02X", pkt.data[i]);

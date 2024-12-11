@@ -8,10 +8,10 @@ size_t get_file_size(const char *file_path) {
     FILE *file = fopen(file_path, "rb");
     if (!file) {
         perror("Error opening file");
-        return 0; // Indicate error
+        return 0;
     }
     fseek(file, 0, SEEK_END); // Move to the end of the file
-    size_t file_size = (size_t)ftell(file); // Get the position (size)
+    size_t file_size = (size_t)ftell(file);
     fclose(file);
     return file_size;
 }
@@ -59,10 +59,8 @@ int write_to_file(const char *file_path, unsigned char *data, size_t size) {
     return 0;
 }
 
-// Function to send a file over the network using Stop-and-Wait protocol
-#define TIMEOUT_SECONDS 2 // Define the timeout duration in seconds
 
-// Timestamp function to get the current time in milliseconds
+//get the current time in milliseconds
 long long timestamp() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -71,7 +69,7 @@ long long timestamp() {
 
 void send_file(int socket_fd, const char *file_path) {
     size_t file_size = get_file_size(file_path);
-    if (file_size == 0) { // Check for error or empty file
+    if (file_size == 0) {
         fprintf(stderr, "Error determining file size or file is empty.\n");
         return;
     }
@@ -84,9 +82,9 @@ void send_file(int socket_fd, const char *file_path) {
 
     printf("File size: %zu bytes\n", file_size);
 
-    unsigned char buffer[MAX_DATA_SIZE]; // Fixed-size buffer on the stack
+    unsigned char buffer[MAX_DATA_SIZE];
     size_t bytes_read;
-    int seq = 0; // Initial sequence number
+    int seq = 0; 
 
     while ((bytes_read = fread(buffer, 1, MAX_DATA_SIZE, file)) > 0) {
         packet pkt;
@@ -120,7 +118,7 @@ void send_file(int socket_fd, const char *file_path) {
         }
 
         free_packet(&pkt);
-        seq = (seq + 1) % MAX_SEQ_NUMBER; // Increment sequence number
+        seq = (seq + 1) % MAX_SEQ_NUMBER; 
     }
 
     fclose(file);
@@ -146,7 +144,7 @@ void receive_file(int socket_fd, const char *file_path, size_t file_size) {
                     total_bytes_read += get_packet_size(&pkt);
                 }
 
-                // Send ACK regardless of whether the packet was expected
+                // Send ACK
                 packet ack_pkt;
                 memset(&ack_pkt, 0, sizeof(packet));
                 build_packet(&ack_pkt, 0, get_packet_seq(&pkt), ACK, NULL);
@@ -164,14 +162,14 @@ void receive_file(int socket_fd, const char *file_path, size_t file_size) {
     if (total_bytes_read != file_size) {
         fprintf(stderr, "Warning: Expected %zu bytes but received %zu bytes.\n", file_size, total_bytes_read);
     }
-    printf("Transferencia Completa.\n");
+    printf("Transferência Completa.\n");
 }
 
 
 //Debugging function, trash
 void read_and_print_file(const char *file_path) {
     size_t file_size = get_file_size(file_path);
-    if (file_size == 0) { // Check for error or empty file
+    if (file_size == 0) {
         fprintf(stderr, "Error determining file size or file is empty.\n");
         return;
     }
@@ -184,7 +182,7 @@ void read_and_print_file(const char *file_path) {
     
     printf("File size: %zu bytes\n", file_size);
 
-    unsigned char buffer[MAX_DATA_SIZE]; // Fixed-size buffer on the stack
+    unsigned char buffer[MAX_DATA_SIZE];
     size_t bytes_read, total_bytes_read = 0;
 
     overwrite_file("RecvdLorem.txt");
@@ -216,7 +214,7 @@ void read_and_print_file(const char *file_path) {
 long long calculate_checksum(const char* my_file) {
     if (my_file == NULL) {
         perror("Invalid file path in calculate_checksum function");
-        return -1; // Indicate an error
+        return -1; 
     }
 
     char command[256];
@@ -226,7 +224,7 @@ long long calculate_checksum(const char* my_file) {
     FILE* pipe = popen(command, "r");
     if (pipe == NULL) {
         perror("popen failed");
-        return -1; // Indicate an error
+        return -1; 
     }
 
     unsigned long calculated_checksum;
@@ -236,13 +234,12 @@ long long calculate_checksum(const char* my_file) {
     if (fscanf(pipe, "%lu %lu", &calculated_checksum, &file_size) != 2) {
         fprintf(stderr, "Failed to parse cksum output.\n");
         pclose(pipe);
-        return -1; // Indicate an error
+        return -1; 
     }
 
     // Close the pipe
     pclose(pipe);
 
-    // Return the checksum as long long
     return (long long)calculated_checksum;
 }
 
@@ -274,7 +271,6 @@ int verify_checksum(const char* my_file, unsigned long checksum) {
         fprintf(stderr, "Failed to parse cksum output.\n");
     }
 
-    // Close the pipe
     pclose(pipe);
 
     return matched;
@@ -284,13 +280,13 @@ int verify_checksum(const char* my_file, unsigned long checksum) {
 int file_exists(const char* file_path) {
     // Check if file_path is valid
     if (file_path == NULL) {
-        return 0; // File does not exist if the path is NULL
+        return 0;
     }
 
     // Use access to check file existence
     if (access(file_path, F_OK) == 0) {
-        return 1; // File exists
+        return 1;
     } else {
-        return 0; // File does not exist
+        return 0;
     }
 }

@@ -42,9 +42,6 @@
 #define OKSIZ      0b01110 // Server responds with filesize for a file
 #define ERROR      0b11111
 
-//#define SEQ { sequencia = (sequencia + 1) % (31); }
-//extern int sequencia, socket_fd;
-//extern int socket_fd;
 
 typedef struct packet_t {
     uint8_t init;             // 8-bits

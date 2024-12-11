@@ -18,6 +18,7 @@ uint8_t get_packet_type(packet *pkt) {
     return type;
 }
 
+// TODO Seq field still fails
 void pack_fields(packet *pkt, uint8_t size, uint8_t seq, uint8_t type) {
     pkt->size_seq_type[0] = 0b00000000;
     pkt->size_seq_type[1] = 0b00000000;

@@ -2,7 +2,7 @@
 
 #define CRC_POLYNOMIAL 0x07 // CRC-8 polynomial (x^8 + x^2 + x^1 + 1)
 
-// Function to calculate 8-bit CRC
+
 unsigned char calculate_crc8(packet* pkt) {
 
     unsigned char crc = 0; // Initial CRC value
@@ -26,7 +26,6 @@ unsigned char calculate_crc8(packet* pkt) {
     return crc;
 }
 
-// Function to check if received data is valid (using CRC)
 int check_crc8(packet* pkt) {
     unsigned char calculated_crc = calculate_crc8(pkt);
     return calculated_crc == pkt->crc; // Return 1 if valid, 0 otherwise

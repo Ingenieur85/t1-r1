@@ -34,27 +34,24 @@ int send_packet(int socket_fd, packet *pkt) {
         return 0;
     }
 
-    // Extract size, sequence, and type fields
     uint8_t size, seq, type;
     unpack_fields(pkt, &size, &seq, &type);
 
-    // Calculate the total packet size
+    //calculate the total packet size
     int total_length = sizeof(pkt->init) + sizeof(pkt->size_seq_type) + sizeof(pkt->crc);
     if (size > 0 && pkt->data != NULL) {
         total_length += size;
     }
 
-    // Ensure the packet meets the minimum size requirement
+    //tests if packet meets the minimum size requirement
     int padded_length = total_length < MIN_PACKET_SIZE ? MIN_PACKET_SIZE : total_length;
 
-    // Allocate buffer for the packet
     unsigned char *buffer = (unsigned char *)malloc(padded_length);
     if (buffer == NULL) {
         perror("Buffer malloc failed");
         return 0;
     }
 
-    // Fill the buffer with packet data
     buffer[0] = pkt->init;
     buffer[1] = pkt->size_seq_type[0];
     buffer[2] = pkt->size_seq_type[1];
@@ -92,7 +89,7 @@ int receive_packet(int socket_fd, packet* received_pkt) {
     unsigned char buffer[MAX_PKT_SIZE];
     memset(buffer, 0, sizeof(buffer));
 
-    free_packet(received_pkt); // Clean up any old data
+    free_packet(received_pkt); 
 
     int bytes_received = recv(socket_fd, buffer, MAX_PKT_SIZE, 0);
     if (bytes_received < 0) {
@@ -116,7 +113,7 @@ int receive_packet(int socket_fd, packet* received_pkt) {
 
     if (received_pkt->crc != buffer[3 + size]) {
         //perror("Erro de CRC. Enviando NACK");
-        free_packet(received_pkt); // Clean up on failure
+        free_packet(received_pkt);
         return -1;
     }
 
@@ -134,6 +131,8 @@ void free_packet(packet *pkt) {
     return;
 }
 
+// Function that tries to conuteract the loopback echo effect
+// TODO not sure if this works, dont care
 void flush_socket(int socket_fd, const packet *last_sent_pkt) {
     unsigned char buffer[1024];
     struct timeval timeout;
@@ -149,7 +148,6 @@ void flush_socket(int socket_fd, const packet *last_sent_pkt) {
         int len = recv(socket_fd, buffer, sizeof(buffer), 0);
 
         if (len > 0) {
-            // Check if the packet matches the last sent packet (optional)
             if (memcmp(buffer, last_sent_pkt, sizeof(packet)) != 0) {
                 // If it doesn't match, stop flushing
                 break;

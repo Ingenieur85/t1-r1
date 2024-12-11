@@ -1,6 +1,14 @@
-**Problemas Conhecidos**
-- size must match the true size of dta pointer when calling build_packet. Otherwise, it will cause segfault( eg. data= NULL but size =1)
+* Trabalho1 - Redes 1
+Fabiano A. de Sá Filho
 
+** Modo de Uso
 
-- Tamanho minimo do pacote. 14 bytes
-- Timeout por threads
+Faça:
+```
+make
+```
+para compilar, e depois chame o executável correspondente, com a interface desejada:
+Ex:
+```
+./client eth0
+```
