@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
                 send_packet(socket_fd, &pkt);
                 flush_socket(socket_fd, &pkt);
                 free_packet(&pkt);
+                printf("Esperando pelo Cliente \n");
            
             // BACKUP
             } else if (pkt_type == BACKUP) {
@@ -140,6 +141,7 @@ int main(int argc, char *argv[]) {
 
                 // Recebe o arquivo
                 receive_file(socket_fd, file_path, file_size);
+                printf("Esperando pelo Cliente \n");
 
 
             // RESTAURA
@@ -185,6 +187,7 @@ int main(int argc, char *argv[]) {
                 free_packet(&received_pkt);
 
                 send_file(socket_fd, file_path);
+                printf("Esperando pelo Cliente \n");
 
 
             // SERVIDOR RECEBEU ALGO ESTRANHO

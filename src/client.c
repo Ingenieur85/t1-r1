@@ -148,6 +148,7 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
+            int error_flag = 0;
             packet pkt;
             memset(&pkt, 0, sizeof(packet));
 
@@ -179,10 +180,13 @@ int main(int argc, char *argv[]) {
                     } else if (pkt_type == ERROR) {
                         if (received_pkt.data) {
                             printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
+                            error_flag = 1;
+                            break;
                         } else {
                             printf("Erro desconhecido.\n");
+                            break;
                         }
-                        break;
+
                     } else {
                         continue;
                         perror("Pacote de resposta não esperado.\n");
@@ -191,17 +195,18 @@ int main(int argc, char *argv[]) {
             }
             free_packet(&received_pkt);
 
-            // Envia Ok para transmitir arquivo
+            if (!error_flag) {
+                // Envia Ok para transmitir arquivo
 
-            memset(&pkt, 0, sizeof(packet));
-            build_packet(&pkt, 0, 0, OK, NULL);
-            send_packet(socket_fd, &pkt);
-            flush_socket(socket_fd, &pkt);
-            free_packet(&pkt);
+                memset(&pkt, 0, sizeof(packet));
+                build_packet(&pkt, 0, 0, OK, NULL);
+                send_packet(socket_fd, &pkt);
+                flush_socket(socket_fd, &pkt);
+                free_packet(&pkt);
 
-            // Recebe o arquivo
-            receive_file(socket_fd, file_path, file_size);
-
+                // Recebe o arquivo
+                receive_file(socket_fd, file_path, file_size);
+            }
 
         // SAIR
         } else if (strcmp(command, "sair") == 0) {
