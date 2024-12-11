@@ -69,6 +69,7 @@ int receive_packet(int socket_fd, packet* received_pkt);
 //void write_data_to_file(FILE *fp, packet pkt);
 void free_packet(packet *pkt);
 void flush_socket(int socket_fd, const packet *last_sent_pkt);
+void listen_for_ok(int socket_fd, packet received_pkt, char *msg);
 
 
 

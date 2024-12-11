@@ -3,6 +3,33 @@
 
 #include "define.h"
 
+void listen_for_ok(int socket_fd, packet received_pkt, char *msg) {
+    while (1) {
+
+        if (receive_packet(socket_fd, &received_pkt)) {
+            uint8_t pkt_type = get_packet_type(&received_pkt);
+            //printf("Received packet type: %d\n", pkt_type);
+            //print_packet(received_pkt);
+
+            if (pkt_type == OK) {
+                printf("%s\n", msg);
+                break;
+            } else if (pkt_type == ERROR) {
+                if (received_pkt.data) {
+                    printf("Erro: %.*s\n", received_pkt.size_seq_type[0] >> 2, received_pkt.data);
+                } else {
+                    printf("Erro desconhecido.\n");
+                }
+                break;
+            } else {
+                continue;
+                perror("Pacote de resposta não esperado.\n");
+            }
+        }
+    }
+
+}
+
 void build_packet(packet *pkt, uint8_t size, uint8_t seq, uint8_t type, const unsigned char *data) {
     if (pkt == NULL) return;
 
